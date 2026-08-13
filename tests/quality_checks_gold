@@ -1,0 +1,71 @@
+/*
+===============================================================================
+Gold Layer - Quality Checks
+===============================================================================
+
+Script Purpose:
+    This script performs quality checks to validate the integrity,
+    consistency, and accuracy of the Gold Layer.
+
+Checks Included:
+    1. Uniqueness of surrogate keys in dimension tables.
+    2. Referential integrity between fact and dimension tables.
+    3. Validation of relationships in the analytical data model.
+
+Expectation:
+    All queries should return NO RESULTS unless a data-quality issue exists.
+===============================================================================
+*/
+
+
+-- =============================================================================
+-- Checking 'gold.dim_customers'
+-- =============================================================================
+
+-- Check for NULL or Duplicate Customer Keys
+-- Expectation: No Results
+
+SELECT
+    customer_key,
+    COUNT(*) AS duplicate_count
+FROM gold.dim_customers
+GROUP BY customer_key
+HAVING COUNT(*) > 1
+    OR customer_key IS NULL;
+
+
+-- =============================================================================
+-- Checking 'gold.dim_products'
+-- =============================================================================
+
+-- Check for NULL or Duplicate Product Keys
+-- Expectation: No Results
+
+SELECT
+    product_key,
+    COUNT(*) AS duplicate_count
+FROM gold.dim_products
+GROUP BY product_key
+HAVING COUNT(*) > 1
+    OR product_key IS NULL;
+
+
+-- =============================================================================
+-- Checking 'gold.fact_sales'
+-- =============================================================================
+
+-- Check Referential Integrity Between Fact and Dimension Tables
+-- Expectation: No Results
+--
+-- Every product_key in fact_sales should exist in dim_products.
+-- Every customer_key in fact_sales should exist in dim_customers.
+
+SELECT
+    f.*
+FROM gold.fact_sales AS f
+LEFT JOIN gold.dim_customers AS c
+    ON c.customer_key = f.customer_key
+LEFT JOIN gold.dim_products AS p
+    ON p.product_key = f.product_key
+WHERE c.customer_key IS NULL
+   OR p.product_key IS NULL;
